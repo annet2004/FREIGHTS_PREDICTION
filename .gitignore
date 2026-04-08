@@ -1,0 +1,83 @@
+# ============================================================
+# .gitignore — Freight Prediction Project
+# ============================================================
+
+# ── Virtual Environment ────────────────────────────────────
+venv/
+env/
+.env/
+.venv/
+data/
+# ── Data files ─────────────────────────────────────────────
+# Raw and processed data should not be committed to git.
+# Share data separately (Google Drive, S3, etc.)
+data/fictional_freight_dataset.csv
+data/cleaned_data.csv
+data/processed_data.csv
+data/selected_features.csv
+data/selected_features_per_fold.json
+data/feature_selection_frequency.csv
+data/best_hyperparameters.json
+data/hyperparameter_logbook.csv
+data/missing_values_overview.csv
+
+# ── Plots (auto-generated, no need to track) ───────────────
+plots/
+
+# ── Python cache ───────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+
+# ── Jupyter Notebooks checkpoints ─────────────────────────
+.ipynb_checkpoints/
+*.ipynb
+
+# ── OS files ───────────────────────────────────────────────
+# Mac
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Linux
+*~
+
+# ── IDE / Editor ───────────────────────────────────────────
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# ── Logs ───────────────────────────────────────────────────
+*.log
+logs/
+
+# ── Model artifacts (large files) ─────────────────────────
+*.pkl
+*.joblib
+*.h5
+*.pt
+*.pth
+models/
+
+# ── Environment variables ──────────────────────────────────
+.env
+.env.local
+*.env
+
+# ── Pytest / coverage ─────────────────────────────────────
+.pytest_cache/
+.coverage
+htmlcov/
+
+# ── Distribution / packaging ──────────────────────────────
+dist/
+build/
+*.egg-info/
