@@ -5,10 +5,7 @@ prices and explains every prediction using SHAP values. The system uses
 Genetic Algorithms for both feature selection and hyperparameter tuning,
 with XGBoost as the final prediction model.
 
-> **One-line summary:**
-> *"We built an end-to-end ML pipeline using Genetic Algorithms for both
-> feature selection and hyperparameter tuning, combined with XGBoost for
-> accurate and interpretable freight price prediction."*
+
 
 ---
 
