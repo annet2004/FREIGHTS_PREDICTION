@@ -5,7 +5,7 @@ import pandas as pd
 import numpy as np
 import json, joblib, os, warnings
 warnings.filterwarnings("ignore")
-from sklearn.ensemble import GradientBoostingRegressor
+from xgboost import XGBRegressor
 from sklearn.model_selection import TimeSeriesSplit
 from sklearn.metrics import mean_absolute_percentage_error
 from config import TARGET_COL, APP_CURRENCY
@@ -27,7 +27,7 @@ print("Running final TimeSeriesSplit evaluation...")
 tscv  = TimeSeriesSplit(n_splits=5)
 mapes = []
 for fold, (tr, te) in enumerate(tscv.split(X), 1):
-    model = GradientBoostingRegressor(**BEST_PARAMS)
+    model = XGBRegressor(**BEST_PARAMS, verbosity=0)
     model.fit(X.iloc[tr], y.iloc[tr])
     mape = mean_absolute_percentage_error(y.iloc[te],
            model.predict(X.iloc[te]))
@@ -39,7 +39,7 @@ print(f"\n  Final Average MAPE: {final_mape:.2f}%")
 
 # Train on full data
 print("\nTraining final model on full dataset...")
-final_model = GradientBoostingRegressor(**BEST_PARAMS)
+final_model = XGBRegressor(**BEST_PARAMS, verbosity=0)
 final_model.fit(X, y)
 
 # Save
@@ -47,7 +47,7 @@ os.makedirs("models", exist_ok=True)
 joblib.dump(final_model, "models/freight_model.pkl")
 
 metadata = {
-    "model_type"        : "GradientBoostingRegressor",
+    "model_type"        : "XGBoost",
     "features"          : FEATURES,
     "target"            : TARGET_COL,
     "hyperparameters"   : BEST_PARAMS,

@@ -57,6 +57,7 @@ with st.sidebar:
     page = st.radio("Navigate", [
         "📊 EDA",
         "🔬 Feature Selection",
+        "📊 Model Comparison",
         "🤖 Model Results",
         "🔍 SHAP Analysis",
         "💡 Predict Price",
@@ -298,6 +299,93 @@ elif page == "🔬 Feature Selection":
                 </div>""", unsafe_allow_html=True)
 
 
+
+# ══════════════════════════════════════════════════════════
+# PAGE 3 — MODEL COMPARISON
+# ══════════════════════════════════════════════════════════
+elif page == "📊 Model Comparison":
+    st.title("📊 Model Comparison")
+    st.markdown("Baseline (distance only) vs XGBoost (GA-tuned features + hyperparameters).")
+
+    comp = load_json("data/model_comparison_results.json")
+
+    if not comp:
+        st.info("Run step8_model_comparison.py first.")
+    else:
+        base  = comp["baseline"]
+        xgb   = comp["xgboost"]
+
+        # ── Metric cards ──────────────────────────────────
+        c1, c2, c3 = st.columns(3)
+        c1.markdown(f"""<div class="metric-card">
+            <div class="metric-value">{comp["mape_improvement"]}%</div>
+            <div class="metric-label">MAPE Improvement over Baseline</div>
+        </div>""", unsafe_allow_html=True)
+        c2.markdown(f"""<div class="metric-card">
+            <div class="metric-value">{xgb["mape_mean"]:.2f}%</div>
+            <div class="metric-label">XGBoost MAPE</div>
+        </div>""", unsafe_allow_html=True)
+        c3.markdown(f"""<div class="metric-card">
+            <div class="metric-value">{APP_CURRENCY}{xgb["mae_mean"]:,.0f}</div>
+            <div class="metric-label">XGBoost Mean Absolute Error</div>
+        </div>""", unsafe_allow_html=True)
+
+        st.markdown("---")
+
+        # ── Summary table ─────────────────────────────────
+        st.markdown('<div class="section-header">Metrics Comparison Table</div>',
+                    unsafe_allow_html=True)
+        table_df = pd.DataFrame({
+            "Model"    : ["Baseline (Linear Regression)", "XGBoost (GA tuned)"],
+            "MAE"      : [f"{APP_CURRENCY}{base['mae_mean']:,.0f}",
+                           f"{APP_CURRENCY}{xgb['mae_mean']:,.0f}"],
+            "RMSE"     : [f"{APP_CURRENCY}{base['rmse_mean']:,.0f}",
+                           f"{APP_CURRENCY}{xgb['rmse_mean']:,.0f}"],
+            "MAPE (%)" : [f"{base['mape_mean']:.2f}%",
+                           f"{xgb['mape_mean']:.2f}%"],
+            "Winner"   : ["❌", "✅"],
+        })
+        st.dataframe(table_df, use_container_width=True, hide_index=True)
+
+        st.markdown("---")
+        col_l, col_r = st.columns(2)
+
+        with col_l:
+            st.markdown('<div class="section-header">Side-by-Side Metrics</div>',
+                        unsafe_allow_html=True)
+            metrics = ["MAE", "RMSE", "MAPE (%)"]
+            base_v  = [base["mae_mean"], base["rmse_mean"], base["mape_mean"]]
+            xgb_v   = [xgb["mae_mean"],  xgb["rmse_mean"],  xgb["mape_mean"]]
+            x = np.arange(len(metrics))
+            fig, ax = plt.subplots(figsize=(6, 4))
+            b1 = ax.bar(x - 0.2, base_v, 0.35, label="Baseline",
+                        color="#90CAF9", edgecolor="white")
+            b2 = ax.bar(x + 0.2, xgb_v,  0.35, label="XGBoost",
+                        color="#1F4E79", edgecolor="white")
+            ax.set_xticks(x); ax.set_xticklabels(metrics)
+            ax.legend(); ax.grid(axis="y", linestyle="--", alpha=0.4)
+            ax.spines[["top","right"]].set_visible(False)
+            fig.tight_layout(); st.pyplot(fig); plt.close()
+
+        with col_r:
+            st.markdown('<div class="section-header">Per-Fold MAPE</div>',
+                        unsafe_allow_html=True)
+            fold_labels = [f"Fold {i+1}" for i in range(len(base["fold_mape"]))]
+            x2 = np.arange(len(fold_labels))
+            fig, ax = plt.subplots(figsize=(6, 4))
+            ax.bar(x2 - 0.2, base["fold_mape"], 0.35, label="Baseline",
+                   color="#90CAF9", edgecolor="white")
+            ax.bar(x2 + 0.2, xgb["fold_mape"],  0.35, label="XGBoost",
+                   color="#1F4E79", edgecolor="white")
+            ax.set_xticks(x2); ax.set_xticklabels(fold_labels)
+            ax.set_ylabel("MAPE (%)")
+            ax.legend(); ax.grid(axis="y", linestyle="--", alpha=0.4)
+            ax.spines[["top","right"]].set_visible(False)
+            fig.tight_layout(); st.pyplot(fig); plt.close()
+
+        st.markdown("---")
+        st.success(f"✅ **XGBoost selected as final model** — {comp['mape_improvement']}% lower MAPE and {comp['mae_improvement']}% lower MAE than baseline.")
+
 # ══════════════════════════════════════════════════════════
 # PAGE 3 — MODEL RESULTS
 # ══════════════════════════════════════════════════════════
@@ -305,15 +393,15 @@ elif page == "🤖 Model Results":
     st.title("🤖 Model Results")
     st.markdown("Ablation study — baseline (distance only) vs full tuned model.")
 
-    ablation    = load_json("data/ablation_results.json")
+    ablation    = load_json("data/model_comparison_results.json")
     best_params = load_json("data/best_hyperparameters.json")
 
     if ablation:
         c1, c2, c3 = st.columns(3)
         for col, val, label in [
-            (c1, f"{ablation.get('baseline_mape_mean','?')}%", "Baseline MAPE"),
-            (c2, f"{ablation.get('full_model_mape_mean','?')}%","Full Model MAPE"),
-            (c3, f"{ablation.get('improvement_pct','?')}%",     "Error Reduction"),
+            (c1, f"{ablation.get('baseline',{}).get('mape_mean','?')}%", "Baseline MAPE"),
+            (c2, f"{ablation.get('xgboost',{}).get('mape_mean','?')}%","Full Model MAPE"),
+            (c3, f"{ablation.get('mape_improvement','?')}%",     "Error Reduction"),
         ]:
             col.markdown(f"""<div class="metric-card">
                 <div class="metric-value">{val}</div>
@@ -324,12 +412,13 @@ elif page == "🤖 Model Results":
         col_l, col_r = st.columns(2)
 
         with col_l:
-            st.markdown('<div class="section-header">Baseline vs Full Model</div>',
+            st.markdown('<div class="section-header">Baseline vs XGBoost — MAPE</div>',
                         unsafe_allow_html=True)
-            baseline_col = ablation.get('baseline_col', DISTANCE_COL)
-            labels = [f"Baseline\n({baseline_col})", "Full Model\n(GA + GBR)"]
-            values = [ablation['baseline_mape_mean'],
-                      ablation['full_model_mape_mean']]
+            base_mape    = ablation.get('baseline', {}).get('mape_mean', 0)
+            xgb_mape     = ablation.get('xgboost',  {}).get('mape_mean', 0)
+            baseline_col = ablation.get('baseline', {}).get('baseline_col', DISTANCE_COL)
+            labels = [f"Baseline\n({baseline_col})", "XGBoost\n(GA + tuned)"]
+            values = [base_mape, xgb_mape]
             fig, ax = plt.subplots(figsize=(6, 4))
             bars = ax.bar(labels, values,
                           color=['#90CAF9','#1F4E79'],
@@ -345,25 +434,25 @@ elif page == "🤖 Model Results":
             fig.tight_layout(); st.pyplot(fig); plt.close()
 
         with col_r:
-            if 'fold_results' in ablation:
+            base_folds = ablation.get('baseline', {}).get('fold_mape', [])
+            xgb_folds  = ablation.get('xgboost',  {}).get('fold_mape', [])
+            if base_folds and xgb_folds:
                 st.markdown('<div class="section-header">Per-Fold MAPE</div>',
                             unsafe_allow_html=True)
-                fold_df = pd.DataFrame(ablation['fold_results'])
-                x = np.arange(len(fold_df))
+                fold_labels = [f"Fold {i+1}" for i in range(len(base_folds))]
+                x = np.arange(len(fold_labels))
                 fig, ax = plt.subplots(figsize=(6, 4))
-                ax.bar(x-0.2, fold_df['baseline_mape'], 0.35,
+                ax.bar(x-0.2, base_folds, 0.35,
                        label='Baseline', color='#90CAF9', edgecolor='white')
-                ax.bar(x+0.2, fold_df['full_mape'],     0.35,
-                       label='Full Model', color='#1F4E79', edgecolor='white')
-                ax.set_xticks(x)
-                ax.set_xticklabels([f"Fold {r['fold']}"
-                                    for _,r in fold_df.iterrows()])
+                ax.bar(x+0.2, xgb_folds,  0.35,
+                       label='XGBoost',  color='#1F4E79', edgecolor='white')
+                ax.set_xticks(x); ax.set_xticklabels(fold_labels)
                 ax.set_ylabel("MAPE (%)")
                 ax.legend(); ax.grid(axis='y', linestyle='--', alpha=0.4)
                 ax.spines[['top','right']].set_visible(False)
                 fig.tight_layout(); st.pyplot(fig); plt.close()
     else:
-        st.info("Run step8_ablation_study.py first.")
+        st.info("Run step8_model_comparison.py first.")
 
     if best_params:
         st.markdown("---")

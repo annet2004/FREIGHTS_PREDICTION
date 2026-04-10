@@ -3,7 +3,10 @@
 # ============================================================
 # This is the ONLY file you need to edit when switching datasets.
 # All pipeline steps and app.py read their settings from here.
-
+#
+# CURRENT DATASET: Indian Freight Price Dataset
+# Rows: 5,000  |  Columns: 54  |  Target: FREIGHT_PRICE_INR
+# ============================================================
 
 # ── Dataset file ───────────────────────────────────────────
 DATASET_FILENAME = "freight_price_dataset.csv"
@@ -88,13 +91,18 @@ HP_POPULATION_SIZE = 15
 HP_NUM_GENERATIONS = 8
 HP_CV_FOLDS        = 3
 
+# XGBoost hyperparameter bounds for GA tuning
 HP_BOUNDS = {
-    "n_estimators"      : (50,  300),
-    "learning_rate"     : (0.01, 0.30),
-    "max_depth"         : (3,   15),
-    "subsample"         : (0.5,  1.0),
-    "min_samples_split" : (2,   10),
+    "n_estimators"  : (50,  400),
+    "learning_rate" : (0.01, 0.30),
+    "max_depth"     : (3,   10),
+    "subsample"     : (0.5,  1.0),
+    "colsample_bytree": (0.5, 1.0),
+    "min_child_weight": (1,  10),
 }
+
+# Multicollinearity threshold — remove one from any pair above this
+MULTICOLLINEARITY_THRESHOLD = 0.92
 
 # ── App display settings ───────────────────────────────────
 APP_TITLE       = "Freight Price Prediction System"

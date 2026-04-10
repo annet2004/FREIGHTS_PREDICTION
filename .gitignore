@@ -23,6 +23,8 @@ data/missing_values_overview.csv
 
 # ── Plots (auto-generated, no need to track) ───────────────
 plots/
+results/
+models/
 
 # ── Python cache ───────────────────────────────────────────
 __pycache__/

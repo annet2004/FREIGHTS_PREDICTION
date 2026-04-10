@@ -6,7 +6,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import shap, json, warnings
 warnings.filterwarnings("ignore")
-from sklearn.ensemble import GradientBoostingRegressor
+from xgboost import XGBRegressor
 from config import TARGET_COL, APP_CURRENCY
 
 df = pd.read_csv("data/processed_data.csv", low_memory=False)
@@ -23,7 +23,7 @@ print(f"Features : {FEATURES}")
 print(f"Target   : {TARGET_COL}")
 
 print("\nTraining model on full dataset...")
-model = GradientBoostingRegressor(**BEST_PARAMS)
+model = XGBRegressor(**BEST_PARAMS, verbosity=0)
 model.fit(X, y)
 print("Done.")
 
